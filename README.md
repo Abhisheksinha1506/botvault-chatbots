@@ -67,13 +67,22 @@ First, install the dependencies:
 npm install
 ```
 
-Then, run the development server:
+Then, run the development server on port 3002:
 
 ```bash
-npm run dev
+npm run dev -- --port 3002
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3002](http://localhost:3002) with your browser to see the result.
+
+## Supabase Integration
+
+This project is integrated with Supabase for:
+- **Visitor Tracking**: Automatically logs page views to `botvault_visitors`.
+- **Early Access Signups**: Captures lead emails in `botvault_signups`.
+- **Analytics**: Pre-configured views for monitoring enterprise interest.
+
+To set up the environment, copy `.env.example` to `.env.local` and add your Supabase credentials.
 
 ## FAQ
 
