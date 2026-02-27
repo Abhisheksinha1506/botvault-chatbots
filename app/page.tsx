@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Mail, Linkedin, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, Linkedin, ExternalLink, BarChart3, Database, Search, TrendingDown, Menu, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 // Toast component
@@ -57,8 +58,17 @@ export default function Home() {
 
       return data && data.length > 0
     } catch (error) {
-      console.error('Unexpected error checking database:', error)
-      throw error
+      console.error('Error checking database for duplicate:', error)
+      
+      // Fallback to localStorage
+      try {
+        const emails = localStorage.getItem('botvault_emails')
+        const existingEmails = emails ? JSON.parse(emails) : []
+        return existingEmails.includes(normalizedEmail)
+      } catch (localStorageError) {
+        console.error('Error checking localStorage fallback:', localStorageError)
+        return false
+      }
     }
   }
 
@@ -122,7 +132,22 @@ export default function Home() {
 
       if (error) {
         console.error('Error saving email to database:', error)
-        setToast({ message: 'Failed to register email. Please try again.', type: 'error' })
+        
+        // Fallback to localStorage
+        try {
+          const emails = localStorage.getItem('botvault_emails')
+          const existingEmails = emails ? JSON.parse(emails) : []
+          const updatedEmails = [...existingEmails, email.toLowerCase()]
+          localStorage.setItem('botvault_emails', JSON.stringify(updatedEmails))
+          
+          setSubmitted(true);
+          setEmail('');
+          setToast({ message: 'Successfully registered!', type: 'success' })
+          setTimeout(() => setSubmitted(false), 3000);
+        } catch (localStorageError) {
+          console.error('Error saving to localStorage fallback:', localStorageError)
+          setToast({ message: 'Failed to register email. Please try again.', type: 'error' })
+        }
         return
       }
 
@@ -138,8 +163,88 @@ export default function Home() {
     }
   };
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      const navHeight = 64 // Navigation bar height (h-16 = 4rem = 64px)
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
+      const offsetPosition = elementPosition - navHeight
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm transition-all duration-300">
+        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+              <Database className="w-4 h-4 text-accent-foreground" />
+            </div>
+            <h1 className="text-xl font-bold text-primary">BotVault</h1>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6">
+            <button
+              onClick={() => scrollToSection('hero')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => scrollToSection('register')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              Deploy Free
+            </button>
+            <button
+              onClick={() => scrollToSection('problem')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              The Problem
+            </button>
+            <button
+              onClick={() => scrollToSection('how')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              How It Works
+            </button>
+            <button
+              onClick={() => scrollToSection('features')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              Deterministic
+            </button>
+            <button
+              onClick={() => scrollToSection('use-cases')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              Comparison
+            </button>
+            <button
+              onClick={() => scrollToSection('waitlist')}
+              className="text-sm font-medium transition-colors hover:text-accent text-muted-foreground"
+            >
+              Waitlist
+            </button>
+            <ThemeToggle />
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-accent/10 transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+      </nav>
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -150,7 +255,7 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section className="bg-background py-24 lg:py-32">
+      <section id="hero" className="bg-background py-24 lg:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl sm:text-6xl font-bold mb-6">
@@ -163,8 +268,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Top Registration Form */}
-      <section className="py-2 px-4 sm:px-6 lg:px-8 bg-secondary/20">
+      {/* Registration Section */}
+      <section id="register" className="py-2 px-4 sm:px-6 lg:px-8 bg-secondary/20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h3 className="text-xl font-bold text-primary mb-3">Deploy Your First Bot Free</h3>
@@ -199,8 +304,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Problem */}
-      <section className="py-24 lg:py-32 bg-secondary/30">
+      {/* Problem Section */}
+      <section id="problem" className="py-24 lg:py-32 bg-secondary/30">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <h3 className="text-2xl font-bold text-primary mb-4">The Problem</h3>
@@ -214,8 +319,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-24 lg:py-32">
+      {/* How It Works Section */}
+      <section id="how" className="py-24 lg:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <h3 className="text-2xl font-bold text-primary mb-12">How It Works</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -257,8 +362,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Mock Conversation */}
-      <section className="py-24 lg:py-32 bg-secondary/30">
+      {/* Features Section */}
+      <section id="features" className="py-24 lg:py-32 bg-secondary/30">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <h3 className="text-2xl font-bold text-primary mb-8">Deterministic by Design</h3>
           <Card className="border border-border bg-card">
@@ -299,8 +404,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Comparison Table */}
-      <section className="py-24 lg:py-32">
+      {/* Use Cases Section */}
+      <section id="use-cases" className="py-24 lg:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <h3 className="text-2xl font-bold text-primary mb-8">LLM Bots Guess. Rule Bots Don't.</h3>
           <div className="overflow-x-auto">
@@ -441,7 +546,13 @@ export default function Home() {
             <div className="text-sm text-muted-foreground text-center md:text-left">
               <p className="mb-2">Currently in early access · Hosted on Vercel · Migrating to AWS for full launch</p>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
+              <a
+                href="/privacy"
+                className="text-foreground hover:text-accent transition-colors text-sm font-medium"
+              >
+                Privacy Policy
+              </a>
               <a
                 href="https://www.linkedin.com/in/abhisheksinha1506/"
                 target="_blank"
